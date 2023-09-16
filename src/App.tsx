@@ -1,33 +1,61 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { useEffect, useRef, useState } from 'react'
 import './App.css'
+import { type User } from './types'
+import { UserList } from './components/UserList'
 
-function App() {
-  const [count, setCount] = useState(0)
+function App () {
+  const [datos, setDatos] = useState<User[]>([])
+  const [showColors, setShowColors] = useState(false)
+  const [sortByCountry, setSortByCountry] = useState(false)
+  const originalUser = useRef<User[]>([])
+
+  const toggleColor = () => {
+    setShowColors(!showColors)
+  }
+  const toggleCountry = () => {
+    setSortByCountry(prevState => !prevState)
+  }
+  const handleReset = () => {
+    setDatos(originalUser.current)
+  }
+
+  useEffect(() => {
+    fetch('https://randomuser.me/api/?results=100')
+      .then(async resp => await resp.json())
+      .then(datos => {
+        setDatos(datos.results)
+        originalUser.current = datos.results
+      })
+      .catch(err => { console.log(err) }
+      )
+  }, [])
+
+  const sortedUsers = sortByCountry
+    ? datos.toSorted((a, b) => {
+      return a.location.country.localeCompare(b.location.country)
+    })
+    : datos
+
+  const handleDelete = (email: string) => {
+    const filterUser = datos.filter((user) => user.email !== email)
+    setDatos(filterUser)
+  }
 
   return (
     <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
+      <h1>Prueba técnica</h1>
+      <header style={{ marginBottom: 48 }}>
+        <button onClick={toggleColor}>Cambiar Color</button>
+        <button onClick={toggleCountry}>
+          {sortByCountry ? 'Orden por defecto' : 'Sort By Country'}
         </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+        <button onClick={handleReset}>
+          Reset State
+        </button>
+      </header>
+      <main>
+        <UserList deleteUser={handleDelete} showColor={showColors} users={sortedUsers} />
+      </main>
     </>
   )
 }

@@ -9,11 +9,15 @@
     ],
     "parserOptions": {
         "ecmaVersion": "latest",
+        "project": "./tsconfig.json",
         "sourceType": "module"
     },
     "plugins": [
         "react"
     ],
     "rules": {
+        "@typescript-eslint/explicit-function-return-type": "off",
+        "@typescript-eslint/method-signature-style": "off",
+        "react/react-in-jsx-scope": "off"
     }
 }
