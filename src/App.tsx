@@ -1,19 +1,21 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent, useMemo } from 'react'
 import './App.css'
-import { type User } from './types'
+import { SortBy, type User } from './types.d'
 import { UserList } from './components/UserList'
 
 function App () {
   const [datos, setDatos] = useState<User[]>([])
   const [showColors, setShowColors] = useState(false)
-  const [sortByCountry, setSortByCountry] = useState(false)
+  const [sorting, setSorting] = useState<SortBy>(SortBy.NONE)
   const originalUser = useRef<User[]>([])
+  const [filterCountry, setFilterCountry] = useState<string | null>(null)
 
   const toggleColor = () => {
     setShowColors(!showColors)
   }
   const toggleCountry = () => {
-    setSortByCountry(prevState => !prevState)
+    const sortingValue = sorting === SortBy.NONE ? SortBy.COUNTRY : SortBy.NONE
+    setSorting(sortingValue)
   }
   const handleReset = () => {
     setDatos(originalUser.current)
@@ -30,15 +32,36 @@ function App () {
       )
   }, [])
 
-  const sortedUsers = sortByCountry
-    ? datos.toSorted((a, b) => {
-      return a.location.country.localeCompare(b.location.country)
-    })
-    : datos
+  const filterUser = useMemo(() => {
+    console.log('filterUser')
+
+    return filterCountry != null && filterCountry.length > 0
+      ? datos.filter((user) => {
+        return user.location.country.toLocaleLowerCase().includes(filterCountry.toLocaleLowerCase())
+      })
+      : datos
+  }, [datos, filterCountry])
+
+  const sortedUsers = useMemo(() => {
+    console.log('sortedUsers')
+
+    return sorting === SortBy.COUNTRY
+      ? filterUser.toSorted((a, b) => { return a.location.country.localeCompare(b.location.country) }
+      )
+      : filterUser
+  }, [filterUser, sorting])
 
   const handleDelete = (email: string) => {
     const filterUser = datos.filter((user) => user.email !== email)
     setDatos(filterUser)
+  }
+  const handleFilter = (e: ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value
+    setFilterCountry(inputValue)
+  }
+
+  const handleSort = (sort: SortBy) => {
+    setSorting(sort)
   }
 
   return (
@@ -47,14 +70,24 @@ function App () {
       <header style={{ marginBottom: 48 }}>
         <button onClick={toggleColor}>Cambiar Color</button>
         <button onClick={toggleCountry}>
-          {sortByCountry ? 'Orden por defecto' : 'Sort By Country'}
+          {sorting === SortBy.COUNTRY ? 'Orden por defecto' : 'Sort By Country'}
         </button>
-        <button onClick={handleReset}>
-          Reset State
-        </button>
+        <button onClick={handleReset}>Reset State</button>
+        <input
+          type="text"
+          placeholder="Filter Country"
+          onChange={e => {
+            handleFilter(e)
+          }}
+        />
       </header>
       <main>
-        <UserList deleteUser={handleDelete} showColor={showColors} users={sortedUsers} />
+        <UserList
+          handleSort={handleSort}
+          deleteUser={handleDelete}
+          showColor={showColors}
+          users={sortedUsers}
+        />
       </main>
     </>
   )
