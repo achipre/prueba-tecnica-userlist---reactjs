@@ -34,7 +34,6 @@ function App () {
 
   const filterUser = useMemo(() => {
     console.log('filterUser')
-
     return filterCountry != null && filterCountry.length > 0
       ? datos.filter((user) => {
         return user.location.country.toLocaleLowerCase().includes(filterCountry.toLocaleLowerCase())
@@ -43,12 +42,10 @@ function App () {
   }, [datos, filterCountry])
 
   const sortedUsers = useMemo(() => {
-    console.log('sortedUsers')
-
-    return sorting === SortBy.COUNTRY
-      ? filterUser.toSorted((a, b) => { return a.location.country.localeCompare(b.location.country) }
-      )
-      : filterUser
+    if (sorting === SortBy.NONE) return filterUser
+    if (sorting === SortBy.COUNTRY) return filterUser.toSorted((a, b) => { return a.location.country.localeCompare(b.location.country) })
+    if (sorting === SortBy.NAME) return filterUser.toSorted((a, b) => { return a.name.first.localeCompare(b.name.first) })
+    if (sorting === SortBy.LAST) return filterUser.toSorted((a, b) => { return a.name.last.localeCompare(b.name.last) })
   }, [filterUser, sorting])
 
   const handleDelete = (email: string) => {
@@ -83,7 +80,7 @@ function App () {
       </header>
       <main>
         <UserList
-          handleSort={handleSort}
+          changeShorting={handleSort}
           deleteUser={handleDelete}
           showColor={showColors}
           users={sortedUsers}
